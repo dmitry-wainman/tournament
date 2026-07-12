@@ -1,0 +1,132 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  groupPlayers    GroupPlayer[]
+  matchResults    MatchResult[]
+  pairingsAsA     PlayerPairing[] @relation("PairingA")
+  pairingsAsB     PlayerPairing[] @relation("PairingB")
+  registrations   TournamentPlayer[]
+}
+
+model Tournament {
+  id        String   @id @default(cuid())
+  name      String
+  status    TournamentStatus @default(DRAFT)
+  createdAt DateTime @default(now())
+
+  rounds        Round[]
+  pairings      PlayerPairing[]
+  registrations TournamentPlayer[]
+}
+
+// Registers a player into a specific tournament (a Player can exist across many tournaments).
+model TournamentPlayer {
+  id           String   @id @default(cuid())
+  tournamentId String
+  playerId     String
+  registeredAt DateTime @default(now())
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id])
+  player     Player     @relation(fields: [playerId], references: [id])
+
+  @@unique([tournamentId, playerId])
+}
+
+enum TournamentStatus {
+  DRAFT
+  ACTIVE
+  PUBLISHED
+}
+
+model Round {
+  id           String   @id @default(cuid())
+  tournamentId String
+  roundNumber  Int
+  status       RoundStatus @default(PENDING)
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id])
+  groups     Group[]
+
+  @@unique([tournamentId, roundNumber])
+}
+
+enum RoundStatus {
+  PENDING     // groups not yet generated
+  ACTIVE      // groups generated, matches in progress
+  COMPLETED   // all scores entered, standings recomputed
+}
+
+model Group {
+  id          String @id @default(cuid())
+  roundId     String
+  groupNumber Int
+
+  round        Round         @relation(fields: [roundId], references: [id])
+  groupPlayers GroupPlayer[]
+  match        Match?
+
+  @@unique([roundId, groupNumber])
+}
+
+// Links a player to a group (the "pod" of 4 for that round)
+model GroupPlayer {
+  id       String @id @default(cuid())
+  groupId  String
+  playerId String
+
+  group  Group  @relation(fields: [groupId], references: [id])
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@unique([groupId, playerId])
+}
+
+// One match per group of 4 (adjust if your game plays multiple matches per pod)
+model Match {
+  id      String @id @default(cuid())
+  groupId String @unique
+
+  group   Group         @relation(fields: [groupId], references: [id])
+  results MatchResult[]
+}
+
+// One row per player per match: their score and resulting rank (1-4)
+model MatchResult {
+  id            String @id @default(cuid())
+  matchId       String
+  playerId      String
+  pointsScored  Float
+  rank          Int    // 1 = best, 4 = worst
+
+  match  Match  @relation(fields: [matchId], references: [id])
+  player Player @relation(fields: [playerId], references: [id])
+
+  @@unique([matchId, playerId])
+}
+
+// Tracks how many times two players have faced each other in a tournament,
+// used by the seeding algorithm to avoid repeat opponents.
+// Store playerAId < playerBId (alphabetically/lexically) for a canonical order.
+model PlayerPairing {
+  id           String @id @default(cuid())
+  tournamentId String
+  playerAId    String
+  playerBId    String
+  timesPlayed  Int    @default(0)
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id])
+  playerA    Player     @relation("PairingA", fields: [playerAId], references: [id])
+  playerB    Player     @relation("PairingB", fields: [playerBId], references: [id])
+
+  @@unique([tournamentId, playerAId, playerBId])
+}
