@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PrismaClient } from "@prisma/client";
 import PlayerManager from "./PlayerManager";
 import TournamentActions from "./TournamentActions";
 import RoundManager from "./RoundManager";
 import { computeStandings } from "@/lib/standings";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
 
 export const dynamic = "force-dynamic";
 

@@ -1,9 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PrismaClient } from "@prisma/client";
 import { computeStandings } from "@/lib/standings";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
 
 export const dynamic = "force-dynamic";
 

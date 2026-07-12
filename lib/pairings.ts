@@ -1,6 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
 
 /** Canonical (A, B) ordering so (x,y) and (y,x) map to the same DB row. */
 function canonicalPair(playerAId: string, playerBId: string): [string, string] {

@@ -1,7 +1,7 @@
 import "./globals.css";
 
 export const metadata = {
-  title: "Tournament APP",
+  title: "Tournament Admin",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

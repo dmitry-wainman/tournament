@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { computeStandingsWithAllPlayers } from "@/lib/standings";
 import { loadPairingHistory } from "@/lib/pairings";
 import { seedRound } from "@/lib/seeding";
+import { prisma } from "@/lib/prisma";
 
-const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const tournamentId = params.id;
