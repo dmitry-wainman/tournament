@@ -106,8 +106,8 @@ model MatchResult {
   id            String @id @default(cuid())
   matchId       String
   playerId      String
-  pointsScored  Float
-  rank          Float  // 1 = best; ties share the average of the positions they occupy (e.g. 2.5)
+  pointsScored  Int
+  rank          Decimal  // 1 = best; ties share the average of the positions they occupy (e.g. 2.5)
 
   match  Match  @relation(fields: [matchId], references: [id])
   player Player @relation(fields: [playerId], references: [id])
