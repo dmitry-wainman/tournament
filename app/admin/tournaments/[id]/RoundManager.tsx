@@ -72,11 +72,23 @@ function GroupScoreForm({ group, locked }: { group: GroupData; locked: boolean }
     }
   }
 
-  // Ranked preview, purely client-side, to show the admin how scores will rank before saving
-  const ranked = [...group.players]
+  // Ranked preview, purely client-side, to show the admin how scores will rank before saving.
+  // Mirrors the backend's fractional ranking: ties share the average of the positions they occupy.
+  const entered = group.players
     .map((p) => ({ ...p, points: Number(values[p.id]) }))
-    .filter((p) => !Number.isNaN(p.points) && values[p.id] !== "")
-    .sort((a, b) => b.points - a.points);
+    .filter((p) => !Number.isNaN(p.points) && values[p.id] !== "");
+  const sortedEntered = [...entered].sort((a, b) => b.points - a.points);
+  const rankByPlayerId = new Map<string, number>();
+  {
+    let i = 0;
+    while (i < sortedEntered.length) {
+      let j = i;
+      while (j + 1 < sortedEntered.length && sortedEntered[j + 1].points === sortedEntered[i].points) j++;
+      const avgRank = (i + 1 + (j + 1)) / 2;
+      for (let k = i; k <= j; k++) rankByPlayerId.set(sortedEntered[k].id, avgRank);
+      i = j + 1;
+    }
+  }
 
   return (
     <div style={{ border: "1px solid var(--line)", borderRadius: 8, padding: 16, marginBottom: 12 }}>
@@ -86,13 +98,13 @@ function GroupScoreForm({ group, locked }: { group: GroupData; locked: boolean }
       </div>
 
       {group.players.map((p) => {
-        const rankIdx = ranked.findIndex((r) => r.id === p.id);
+        const rank = rankByPlayerId.get(p.id);
         return (
           <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
             <span style={{ flex: 1, fontSize: 14 }}>{p.name}</span>
-            {rankIdx !== -1 && (
+            {rank !== undefined && (
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--gold)" }}>
-                #{rankIdx + 1}
+                #{rank}
               </span>
             )}
             <input

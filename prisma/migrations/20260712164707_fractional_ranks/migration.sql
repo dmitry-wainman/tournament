@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "MatchResult" ALTER COLUMN "rank" SET DATA TYPE DOUBLE PRECISION;

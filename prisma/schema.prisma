@@ -1,6 +1,7 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")   // pooled connection — used for normal app queries
+  directUrl = env("DIRECT_URL")     // direct connection — used only for migrations
 }
 
 generator client {
@@ -106,7 +107,7 @@ model MatchResult {
   matchId       String
   playerId      String
   pointsScored  Float
-  rank          Int    // 1 = best, 4 = worst
+  rank          Float  // 1 = best; ties share the average of the positions they occupy (e.g. 2.5)
 
   match  Match  @relation(fields: [matchId], references: [id])
   player Player @relation(fields: [playerId], references: [id])
