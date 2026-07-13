@@ -155,7 +155,7 @@ export default function RoundManager({
   const lastRound = rounds[rounds.length - 1] ?? null;
   const canGenerateNextRound = tournamentStatus === "ACTIVE" && (!lastRound || lastRound.status === "COMPLETED");
   const activeRound = lastRound && lastRound.status === "ACTIVE" ? lastRound : null;
-  const allGroupsScored = activeRound?.groups.every((g) => g.results.length === 4) ?? false;
+  const allGroupsScored = activeRound?.groups.every((g) => g.results.length === g.players.length) ?? false;
 
   async function handleGenerateRound() {
     setError(null);

@@ -16,8 +16,25 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   });
   if (!round) return NextResponse.json({ error: "Round not found" }, { status: 404 });
 
-  // Guard: every group's match must have exactly 4 results before finalizing.
-  const incomplete = round.groups.filter((g) => (g.match?.results.length ?? 0) !== 4);
+  // Guard: every group must have exactly 3 or 4 players (data integrity check —
+  // the seeding algorithm should never produce anything else, but a round created
+  // before this rule existed, or a manual DB edit, could violate it).
+  const badSize = round.groups.filter((g) => g.groupPlayers.length !== 3 && g.groupPlayers.length !== 4);
+  if (badSize.length > 0) {
+    return NextResponse.json(
+      {
+        error: `${badSize.length} group(s) have an invalid number of players (must be 3 or 4): group ${badSize
+          .map((g) => `#${g.groupNumber} (${g.groupPlayers.length})`)
+          .join(", ")}`,
+      },
+      { status: 400 }
+    );
+  }
+
+  // Guard: every group's match must have one result per player in that group before finalizing.
+  const incomplete = round.groups.filter(
+    (g) => (g.match?.results.length ?? 0) !== g.groupPlayers.length
+  );
   if (incomplete.length > 0) {
     return NextResponse.json(
       { error: `${incomplete.length} group(s) still missing scores` },

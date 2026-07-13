@@ -14,6 +14,7 @@ interface RankedScore extends ScoreInput {
  * Fractional ranking: players tied on points share the average of the position
  * range they occupy, and the next distinct score continues after that range
  * (not compressed). E.g. points 200/100/100/50 -> ranks 1 / 2.5 / 2.5 / 4.
+ * Works for any group size (2, 3, or 4 players), not just 4.
  */
 function assignFractionalRanks(scores: ScoreInput[]): RankedScore[] {
   const sorted = [...scores].sort((a, b) => b.pointsScored - a.pointsScored);
@@ -22,11 +23,9 @@ function assignFractionalRanks(scores: ScoreInput[]): RankedScore[] {
   let i = 0;
   while (i < sorted.length) {
     let j = i;
-    // extend j while the next entries are tied on points with position i
     while (j + 1 < sorted.length && sorted[j + 1].pointsScored === sorted[i].pointsScored) {
       j++;
     }
-    // positions i..j (0-indexed) correspond to 1-indexed ranks (i+1)..(j+1)
     const avgRank = (i + 1 + (j + 1)) / 2;
     for (let k = i; k <= j; k++) {
       result.push({ ...sorted[k], rank: avgRank });
@@ -37,13 +36,26 @@ function assignFractionalRanks(scores: ScoreInput[]): RankedScore[] {
   return result;
 }
 
-// POST body: { scores: ScoreInput[] }  — exactly 4 entries, one per player in the match's group
+// POST body: { scores: ScoreInput[] } — one entry per player in the match's group
+// (group size is usually 4, but may be 2 or 3 for the last group in an uneven pool).
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const matchId = params.id;
   const { scores }: { scores: ScoreInput[] } = await req.json();
 
-  if (!scores || scores.length !== 4) {
-    return NextResponse.json({ error: "Expected exactly 4 player scores" }, { status: 400 });
+  const match = await prisma.match.findUnique({
+    where: { id: matchId },
+    include: { group: { include: { groupPlayers: true } } },
+  });
+  if (!match) {
+    return NextResponse.json({ error: "Match not found" }, { status: 404 });
+  }
+
+  const expectedCount = match.group.groupPlayers.length;
+  if (!scores || scores.length !== expectedCount) {
+    return NextResponse.json(
+      { error: `Expected exactly ${expectedCount} player score(s) for this group` },
+      { status: 400 }
+    );
   }
 
   const ranked = assignFractionalRanks(scores);
