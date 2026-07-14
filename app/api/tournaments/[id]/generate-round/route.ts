@@ -45,8 +45,16 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 
   const standings = await computeStandingsWithAllPlayers(tournamentId, allPlayerIds);
   const history = await loadPairingHistory(tournamentId);
-  const seededGroups = seedRound(standings, history);
+  let seededGroups = [];
 
+  // Shuffle players before 1st round
+  const isFirstRound = !(tournament.rounds[0]);
+  if (isFirstRound) {
+    const shuffled = standings.sort((a, b) => Math.random() - 0.5);
+    seededGroups = seedRound(shuffled, history);
+  } else {
+    seededGroups = seedRound(standings, history);
+  }
   const nextRoundNumber = (lastRound?.roundNumber ?? 0) + 1;
 
   const round = await prisma.round.create({
