@@ -109,7 +109,7 @@ function GroupScoreForm({ group, locked }: { group: GroupData; locked: boolean }
             )}
             <input
               type="number"
-              step="any"
+              step="10"
               disabled={locked}
               value={values[p.id]}
               onChange={(e) => setValues((prev) => ({ ...prev, [p.id]: e.target.value }))}
