@@ -67,7 +67,13 @@ export default async function PublicTournamentPage({ params }: { params: { id: s
                   <td style={{ padding: "8px", fontFamily: "var(--font-mono)", color: i < 3 ? "var(--gold)" : undefined, fontWeight: i < 3 ? 700 : 400 }}>
                     {i + 1}
                   </td>
-                  <td style={{ padding: "8px", fontWeight: 600 }}>{s.playerName}</td>
+
+                  <td style={{ padding: "8px", fontWeight: 600 }}>
+                    <Link href={`/tournaments/${tournament.id}/player/${s.playerId}`} style={{ color: "inherit", textDecoration: "none", cursor: "pointer" }}>
+                      {s.playerName}
+                    </Link>
+                  </td>
+
                   <td style={{ padding: "8px", fontFamily: "var(--font-mono)" }}>{s.roundsPlayed}</td>
                   <td style={{ padding: "8px", fontFamily: "var(--font-mono)" }}>{s.sumRank}</td>
                   <td style={{ padding: "8px", fontFamily: "var(--font-mono)" }}>{s.sumPoints}</td>
@@ -76,7 +82,8 @@ export default async function PublicTournamentPage({ params }: { params: { id: s
             </tbody>
           </table>
         </div>
-      )}
-    </div>
+      )
+      }
+    </div >
   );
 }
